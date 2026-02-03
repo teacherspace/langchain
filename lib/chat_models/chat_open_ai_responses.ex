@@ -1231,6 +1231,14 @@ defmodule LangChain.ChatModels.ChatOpenAIResponses do
   # - function_calls
   # - error
 
+  # Reasoning summary events that we process (not skipped)
+  @reasoning_summary_events [
+    "response.reasoning_summary_text.delta",
+    "response.reasoning_summary_text.done",
+    "response.reasoning_summary_part.added",
+    "response.reasoning_summary_part.done"
+  ]
+
   @skippable_streaming_events [
     "response.created",
     "response.in_progress",
@@ -1248,10 +1256,6 @@ defmodule LangChain.ChatModels.ChatOpenAIResponses do
     "response.web_search_call.in_progress",
     "response.web_search_call.searching",
     "response.web_search_call.completed",
-    "response.reasoning_summary_part.added",
-    "response.reasoning_summary_part.done",
-    "response.reasoning_summary_text.delta",
-    "response.reasoning_summary_text.done",
     "response.image_generation_call.completed",
     "response.image_generation_call.generating",
     "response.image_generation_call.in_progress",
@@ -1267,6 +1271,21 @@ defmodule LangChain.ChatModels.ChatOpenAIResponses do
     "response.reasoning_summary.done",
     "error"
   ]
+
+  # Handle reasoning summary delta events - fire callback and return :skip
+  def do_process_response(model, %{
+        "type" => "response.reasoning_summary_text.delta",
+        "delta" => delta
+      }) do
+    Callbacks.fire(model.callbacks, :on_llm_reasoning_delta, [model, delta])
+    :skip
+  end
+
+  def do_process_response(_model, %{"type" => event})
+      when event in @reasoning_summary_events do
+    # Other reasoning events (done, part.added, part.done) are skipped without callback
+    :skip
+  end
 
   def do_process_response(_model, %{"type" => event})
       when event in @skippable_streaming_events do
