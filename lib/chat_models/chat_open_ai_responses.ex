@@ -815,11 +815,9 @@ defmodule LangChain.ChatModels.ChatOpenAIResponses do
         tools,
         retry_count
       ) do
-    body = for_api(openai, messages, tools)
-
-    Req.new(
+    Req.new
       url: openai.endpoint,
-      json: body,
+      json: for_api(openai, messages, tools),
       # required for OpenAI API
       auth: {:bearer, get_api_key(openai)},
       # required for Azure OpenAI version
@@ -1233,8 +1231,7 @@ defmodule LangChain.ChatModels.ChatOpenAIResponses do
   # - function_calls
   # - error
 
-  # Reasoning summary events that we process (not skipped)
-  @reasoning_summary_events [
+  @reasoning_summary_event [
     "response.reasoning_summary_text.delta",
     "response.reasoning_summary_text.done",
     "response.reasoning_summary_part.added",
@@ -1270,7 +1267,6 @@ defmodule LangChain.ChatModels.ChatOpenAIResponses do
     "response.output_text.annotation.added",
     "response.queued",
     "response.reasoning.delta",
-    # NOTE: reasoning_summary events removed from skippable - now handled explicitly above
     "error"
   ]
 
@@ -1309,6 +1305,7 @@ defmodule LangChain.ChatModels.ChatOpenAIResponses do
 
   def do_process_response(_model, %{"type" => event})
       when event in @skippable_streaming_events do
+    Logger.debug("[LANGCHAIN] Skipping streamin event: #{event}")
     :skip
   end
 
