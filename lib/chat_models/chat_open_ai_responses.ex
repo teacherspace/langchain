@@ -727,8 +727,7 @@ defmodule LangChain.ChatModels.ChatOpenAIResponses do
       model: openai.model,
       provider: provider(),
       message_count: length(messages),
-      tools_count: length(tools),
-      messages: messages
+      tools_count: length(tools)
     }
 
     LangChain.Telemetry.span(
@@ -1751,7 +1750,7 @@ defmodule LangChain.ChatModels.ChatOpenAIResponses do
   end
 
   @impl ChatModel
-  def provider, do: "openai"
+  def provider, do: "openai_responses"
 
   @doc """
   Determine if an error should be retried with a fallback model.
